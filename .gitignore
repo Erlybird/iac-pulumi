@@ -23,8 +23,6 @@
 hs_err_pid*
 replay_pid*
 
-
-#Node Moudules
+#node modules
 /node_modules/
-
 

@@ -1,4 +1,4 @@
-name: iac-pulumi
+name: iac-demo
 runtime:
   name: nodejs
   options:
