@@ -1,13 +1,15 @@
 {
-    "name": "iac-demo",
+
+    "name": "iac-pulumi",
     "main": "index.js",
     "dependencies": {
-        "@pulumi/pulumi": "^3.0.0",
+
         "@pulumi/aws": "^5.0.0",
         "@pulumi/awsx": "^1.0.0",
         "@pulumi/pulumi": "^3.0.0",
         "fs": "^0.0.1-security",
         "js-yaml": "^4.1.0"
-    
+
+
     }
 }

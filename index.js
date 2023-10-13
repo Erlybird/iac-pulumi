@@ -1,112 +1,143 @@
-const aws = require("@pulumi/aws");
+
+"use strict";
 const pulumi = require("@pulumi/pulumi");
-// const config = require("./config");
-
-
+const aws = require("@pulumi/aws");
+const awsx = require("@pulumi/awsx");
 const fs = require('fs');
 const yaml = require('js-yaml');
 
-let stackName = pulumi.getStack();
-let configFileName = `Pulumi.${stackName}.yaml`;
 
+let NameOfStack = pulumi.getStack();
+let FileName = `Pulumi.${NameOfStack}.yaml`;
+const configFile = yaml.load(fs.readFileSync(FileName, 'utf8'));
 
+// const current = aws.getRegion({});
 
-    const config = yaml.load(fs.readFileSync(configFileName, 'utf8'));
+const my_VPC = new aws.ec2.Vpc("my_Vpc",
+    {cidrBlock:"10.0.0.0/16",
+tags:{
+    Name:"VPC"
+}});
 
+const my_ig = new aws.ec2.InternetGateway("my_ig",{
+    tags:{
+        Name: "IGW"
+    }
+});
 
-let id = 0;
-
-
-const createSubnets = (vpc, type, count) => {
-    let subnets = [];
-
-    // const baseCIDR = config.subnetCIDR; // Split the base CIDR
-    const octets = config.subnetCIDR.split('.');
-
-    // Parse the third octet as an integer
-    let thirdOctet = parseInt(octets[2]);
-
-    for (let i = 0; i < count; i++) {
-        let subnet = new aws.ec2.Subnet(`subnet-${type}-${i}`, {
+const vpc_ig_attacher = new aws.ec2.InternetGatewayAttachment("vpc_ig_attacher",{
+    vpcId:my_VPC.id,
+    internetGatewayId:my_ig.id,
+    tags:{
+        Name: "VPC_IGW_Attacher"
+    }
+});
+let counter = 0;
+//function for creating a subnet- private or public
+const CreateSubnets = ( vpc , type , noOfSubnets) => {
+    const OctetsGiven = configFile.subnetCIDR.split('.');
+    let midOctet = parseInt(OctetsGiven[2]);
+    let Subnets = [];
+    for(let i =1; i< noOfSubnets+1; i++){
+        let tempSubnet = new aws.ec2.Subnet(`${type}-Subnet-${i}`,{
             vpcId: vpc.id,
-            cidrBlock: `${octets[0]}.${octets[1]}.${id++}.${octets[3]}/24`,
-            // cidrBlock: `10.0.${++id}.0/24`,
-            // cidrBlock: pulumi.interpolate`${baseCIDR.apply(base =>
-            //     base.map((part, index) =>
-            //         (index === 2) ? `${++id}.0` : part))}/24`,
-            availabilityZone: `${config.availabilityZone}${String.fromCharCode(97 + i)}`,
-            tags: {
-                Name: `subnet-${type}-${i}`,
-                Type: type
+            cidrBlock: `${OctetsGiven[0]}.${OctetsGiven[1]}.${midOctet+counter++}.${OctetsGiven[3]}/24`,
+            availabilityZone:`${configFile.availabilityZone}${String.fromCharCode(96 + i)}`,
+            tags:{
+                Name: `${type}-Subnet-${i}`
             }
         });
-        subnets.push(subnet);
+        Subnets.push(tempSubnet);
     }
-    return subnets;
+    return Subnets;
 }
 
-const main = async () => {
+//Creating public and Private Subnets
+const publicSubnets = CreateSubnets(my_VPC,'public',configFile.numOfPubSubnets);
+const privateSubnets = CreateSubnets(my_VPC,'private',configFile.numOfPriSubnets);
 
-    // Create a VPC
-    const vpc = new aws.ec2.Vpc("my-vpc", {
-        cidrBlock: config.baseCIDRBlock,
-        tags: {
-            Name: config.vpcName,
-        },
-    });
 
-    // Create public subnets
-    const publicSubnets = createSubnets(vpc, 'public', config.numOfPubSubnets);
 
-    // Create private subnets
-    const privateSubnets = createSubnets(vpc, 'private', config.numOfPriSubnets);
+// const my_subnet = new aws.ec2.Subnet("main_subnet",{
+//     vpcId:my_VPC.id,
+//     cidrBlock:"10.0.1.0/24",
+//     availabilityZone:"us-east-1a",
+//     tags:{
+//         Name:"main_sub"
+//     }
+// });
 
-    // Create an internet gateway and attach it to the VPC
-    const internetGateway = new aws.ec2.InternetGateway("igw", {
-        tags: {
-            Name: config.igName,
-        },
-    });
+// const pri_subnet = new aws.ec2.Subnet("pri_subnet",{
+//     vpcId:my_VPC.id,
+//     cidrBlock:"10.0.0.0/24",
+//     availabilityZone:"us-east-1a",
+//     tags:{
+//         Name:"private_Subnet"
+//     }
+// });
 
-    const vpcGatewayAttachment = new aws.ec2.InternetGatewayAttachment("vpcGatewayAttachment", {
-        vpcId: vpc.id,
-        internetGatewayId: internetGateway.id
-    });
-
-    // Create public route tables
-    const publicRouteTable = new aws.ec2.RouteTable("public-route-table", {
-        vpcId: vpc.id,
-    });
-
-    // Create private route tables
-    const privateRouteTable = new aws.ec2.RouteTable("private-route-table", {
-        vpcId: vpc.id,
-    });
-
-    //create a public route and setting a cidr destination
-    const publicRoute = new aws.ec2.Route("publicRoute", {
-        routeTableId: publicRouteTable.id,
-        destinationCidrBlock: "0.0.0.0/0",
-        gatewayId: internetGateway.id
-    });
-
-    // Associate the public route tables with the public subnets
-    for (let i = 0; i < config.numOfPubSubnets; i++) {
-        new aws.ec2.RouteTableAssociation(`public-association-${i}`, {
-            subnetId: publicSubnets[i].id,
-            routeTableId: publicRouteTable.id,
-        });
+const private_routeTable = new aws.ec2.RouteTable("private_routeTable",{
+    vpcId:my_VPC.id,
+    tags: {
+        Name: "private_RouteTable"
     }
+});
 
-    // Associate the public route tables with the public subnets
-    for (let i = 0; i < config.numOfPriSubnets; i++) {
-        new aws.ec2.RouteTableAssociation(`private-association-${i}`, {
-            subnetId: privateSubnets[i].id,
-            routeTableId: privateRouteTable.id,
-        });
+
+const public_routeTable = new aws.ec2.RouteTable("public_routeTable",{
+    vpcId:my_VPC.id,
+    tags: {
+        Name: "public_RouteTable"
     }
+    }
+    );
 
-    return { vpcId: vpc.id, publicSubnets, privateSubnets, internetGatewayId: internetGateway.id, publicRoute, vpcGatewayAttachment };
+// const private_Route = new aws.ec2.Route("private_Route",{
+//     routeTableId:private_routeTable.id,
+    
+// });
+
+//Creating routes, for traffic and destination
+const public_Routes = new aws.ec2.Route("public_Routes",{
+    routeTableId:public_routeTable.id,
+    gatewayId:my_ig.id,
+    destinationCidrBlock:"0.0.0.0/0"
+});
+
+//public routeTable associations
+for( let j =1; j<= configFile.numOfPubSubnets;j++){
+    let routeTableAssociation = new aws.ec2.RouteTableAssociation(`routeTableAssociation-${j}`,{
+    routeTableId:public_routeTable.id,
+    subnetId: publicSubnets[j-1].id,
+    tags:{
+        Name: `PublicRouteAssociation-${j}`
+    }  });
+
+}
+//private routeTable Associations
+for(let k=1; k<= configFile.numOfPriSubnets; k++){
+    let priRouteTableAssociation = new aws.ec2.RouteTableAssociation(`PriRouteTableAssociation-${k}`,{
+        routeTableId:private_routeTable.id,
+        subnetId: privateSubnets[k-1].id,
+        tags:{
+            Name: `PrivateRouteAssociation-${k}`
+        }  });
+    
+
 }
 
-exports = main();
+
+// const my_routeTableAssociation = new aws.ec2.RouteTableAssociation("main_routeTableAssociateion",{
+//     routeTableId:my_routeTable.id,
+//     subnetId:my_subnet.id
+// });
+
+// const private_routeTableAssociation = new aws.ec2.RouteTableAssociation("privateRouteTableAssociation",{
+//     routeTableId:private_routeTable.id,
+//     subnetId:pri_subnet.id
+// });
+
+
+
+
+

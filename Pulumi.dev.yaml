@@ -1,1 +1,14 @@
 encryptionsalt: v1:5dNiLHxjfAQ=:v1:g0eAQU9+en2bQG/R:UyLB/i46MZorjLxwkY6vjzuaI+ANjg==
+
+config:
+  aws:profile: dev
+  aws:region: us-east-1
+numOfPubSubnets: 3
+numOfPriSubnets: 3
+baseCIDRBlock: "10.0.0.0/16"
+subnetCIDR: "10.0.0.0"
+availabilityZone: "us-east-1"
+vpcName: "myVpcDev"
+igName: "igw"
+
+
