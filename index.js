@@ -13,15 +13,17 @@ const configFile = yaml.load(fs.readFileSync(FileName, 'utf8'));
 
 // const current = aws.getRegion({});
 
-const my_VPC = new aws.ec2.Vpc("my_Vpc",
-    {cidrBlock:"10.0.0.0/16",
+
+const my_VPC = new aws.ec2.Vpc(`${configFile.vpcName}`,
+    {cidrBlock: configFile.baseCIDRBlock,
 tags:{
-    Name:"VPC"
+    Name:configFile.vpcName
 }});
 
-const my_ig = new aws.ec2.InternetGateway("my_ig",{
+const my_ig = new aws.ec2.InternetGateway(`${configFile.igName}`,{
     tags:{
-        Name: "IGW"
+        Name: configFile.igName
+
     }
 });
 
