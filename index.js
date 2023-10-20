@@ -43,7 +43,7 @@ const CreateSubnets = ( vpc , type , noOfSubnets) => {
     for(let i =1; i< noOfSubnets+1; i++){
         let tempSubnet = new aws.ec2.Subnet(`${type}-Subnet-${i}`,{
             vpcId: vpc.id,
-            cidrBlock: `${OctetsGiven[0]}.${OctetsGiven[1]}.${midOctet+counter++}.${OctetsGiven[3]}/24`,
+            cidrBlock: `${OctetsGiven[0]}.${OctetsGiven[1]}.${midOctet+counter++}.${OctetsGiven[3]}/${configFile.subnetMask}`,
             availabilityZone:`${configFile.availabilityZone}${String.fromCharCode(96 + i)}`,
             tags:{
                 Name: `${type}-Subnet-${i}`
@@ -87,7 +87,7 @@ const securityGroup = new aws.ec2.SecurityGroup("security-group",{
         toPort: 443
         },
         {
-            cidrBlocks: ["155.33.133.1/32"],
+            cidrBlocks: [configFile.myIP],
             protocol: "tcp",
             fromPort: 22,
             toPort: 22
