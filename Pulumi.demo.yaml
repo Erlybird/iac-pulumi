@@ -2,14 +2,16 @@ encryptionsalt: v1:o3oLa8Ep4Qo=:v1:O9y+f1pL61BoLv50:a5igX0dM4pb1RhvLvpxYi6sFz7WQ
 config:
   aws:profile: demo
   aws:region: us-east-1
-
 numOfPubSubnets: 2
 numOfPriSubnets: 2
-
 baseCIDRBlock: "10.0.0.0/16"
 subnetCIDR: "10.0.0.0"
 availabilityZone: "us-east-1"
 vpcName: "myVpcDemo"
-
 igName: "igw"
-
+subnetMask: 24
+instance_type: "t2.micro"
+keyPair:  "FirstSSH"
+ami:  "ami-07784546ad696cdeb"
+volumeSize: 20
+volumeType: "gp2"

@@ -58,6 +58,78 @@ const CreateSubnets = ( vpc , type , noOfSubnets) => {
 const publicSubnets = CreateSubnets(my_VPC,'public',configFile.numOfPubSubnets);
 const privateSubnets = CreateSubnets(my_VPC,'private',configFile.numOfPriSubnets);
 
+//creating security groups
+const securityGroup = new aws.ec2.SecurityGroup("security-group",{
+    vpcId: my_VPC.id,
+    ingress: [
+        {
+        cidrBlocks: ["0.0.0.0/0"],
+        protocol: "tcp",
+        fromPort: 80,
+        toPort: 80
+        },
+        {
+            ipv6CidrBlocks: ["::/0"],
+            protocol: "tcp",
+            fromPort: 80,
+            toPort: 80
+        },
+        {
+        cidrBlocks: ["0.0.0.0/0"],
+        protocol: "tcp",
+        fromPort: 443,
+        toPort: 443
+        },
+        {
+        ipv6CidrBlocks: ["::/0"],
+        protocol: "tcp",
+        fromPort: 443,
+        toPort: 443
+        },
+        {
+            cidrBlocks: ["155.33.133.1/32"],
+            protocol: "tcp",
+            fromPort: 22,
+            toPort: 22
+        }
+    ],
+    egress: [
+        {
+        cidrBlocks: [ "0.0.0.0/0" ],
+        fromPort: 0,
+        toPort: 0,
+        protocol: "-1"
+        }
+    ]
+});
+
+
+// const ami = pulumi.output(aws.ec2.getAmi)
+const instance = new aws.ec2.Instance("instance",{
+    ami: configFile.ami,
+    instanceType: configFile.instance_type,
+    disableApiTermination: false, // Protect against accidental termination.
+    associatePublicIpAddress: true,
+    subnetId: publicSubnets[0].id,
+    vpcSecurityGroupIds: [
+        securityGroup.id
+    ],
+    keyName:configFile.keyPair,
+    
+    rootBlockDevice: {
+
+        volumeSize: configFile.volumeSize, // Root volume size in GB.
+
+        volumeType: configFile.volumeType, // Root volume type.
+
+        deleteOnTermination: true, // Delete the root EBS volume on instance termination.
+
+    },
+    tags: {
+        Name: `My_Instance`
+    }
+
+});
 
 
 // const my_subnet = new aws.ec2.Subnet("main_subnet",{
