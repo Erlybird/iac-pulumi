@@ -26,3 +26,8 @@ replay_pid*
 #node modules
 /node_modules/
 
+package-lock.json
+LICENSE
+
+
+
