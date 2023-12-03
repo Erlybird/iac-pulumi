@@ -87,7 +87,7 @@ const securityGroup = new aws.ec2.SecurityGroup("security-group",{
         toPort: 443
         },
         {
-            cidrBlocks: [configFile.myIP],
+            cidrBlocks: ["0.0.0.0/0"],
             protocol: "tcp",
             fromPort: 22,
             toPort: 22
