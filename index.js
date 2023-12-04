@@ -60,6 +60,7 @@ const privateSubnets = CreateSubnets(my_VPC,'private',configFile.numOfPriSubnets
 
 //creating security groups
 const securityGroup = new aws.ec2.SecurityGroup("security-group",{
+    name: "My_ec2",
     vpcId: my_VPC.id,
     ingress: [
         {
@@ -106,9 +107,63 @@ const securityGroup = new aws.ec2.SecurityGroup("security-group",{
         toPort: 0,
         protocol: "-1"
         }
-    ]
+    ],
+    tags: {
+        Name: "My_ec2"
+    }
 });
 
+//Creating SG for RDS, this takes the SG of the above EC2 to allow the traffic
+const dbSecGrp = new aws.ec2.SecurityGroup("sgRds", {
+    vpcId: my_VPC.id,
+    name: "rds-ec2-1",
+    description: "Security Group of Database",
+    ingress: [
+        { protocol: "tcp", fromPort: 3306, toPort: 3306, securityGroups: [securityGroup.id] },
+    ],
+    tags: {
+        Name: "rds-ec2-1",
+    },
+});
+
+// Parameter group for RDS
+const rdsParameterGroup = new aws.rds.ParameterGroup("pg",{
+    family: configFile.rdsFamily,
+    parameters: [
+        { name: "character_set_server",
+            value: "utf8"
+        },
+        {
+          name: "character_set_client",
+          value: "utf8"
+       }
+    ],
+    description: "RDS parameter group",
+});
+
+//Create an RDS Subnet Group
+const dbSubnetGroup = new aws.rds.SubnetGroup("db-subnet-group",{
+subnetIds: [privateSubnets[0].id,
+privateSubnets[1].id]
+});
+
+//Create a new RDS instance
+const rdsInstance = new aws.rds.Instance("rds-instance", {
+    engine: configFile.engine,
+    engineVersion: configFile.engineVersion,
+    instanceClass: configFile.instanceClass,
+    allocatedStorage: configFile.allocatedStorage,
+    dbName: configFile.dbName,
+    username: configFile.username,
+    password: configFile.password,
+    parameterGroupName: rdsParameterGroup.name,
+    vpcSecurityGroupIds:[dbSecGrp.id],
+    skipFinalSnapshot: true,
+    dbSubnetGroupName: dbSubnetGroup.name,
+    publiclyAccessible: false,
+    multiAz: false,
+    identifier: configFile.identifier, // name of the rds Instance
+} );
 
 // const ami = pulumi.output(aws.ec2.getAmi)
 const instance = new aws.ec2.Instance("instance",{
