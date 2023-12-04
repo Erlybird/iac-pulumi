@@ -16,4 +16,13 @@ ami:  "ami-0ad1322754d70c0e8"
 volumeSize: 20
 volumeType: "gp2"
 myIP: "67.173.248.41/32"
+rdsFamily: "mysql8.0"
+engine: "mysql"
+engineVersion: "8.0.33"
+instanceClass: "db.t3.micro"
+allocatedStorage: 20
+dbName: "cloud"
+username: "root"
+password: "Ssangramm12"
+identifier: "my-rds-instance"
 
