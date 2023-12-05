@@ -174,6 +174,12 @@ const userDataScript = pulumi.interpolate`#!/bin/bash
 echo "URL=jdbc:mysql://${rdsInstance.address}:3306/${rdsInstance.dbName}?createDatabaseIfNotExist=true" >> /etc/environment
 echo "USER=${rdsInstance.username}" >> /etc/environment
 echo "PASS=${rdsInstance.password}" >> /etc/environment 
+
+sudo systemctl daemon-reload
+sudo systemctl enable webapp
+sudo systemctl start webapp
+sudo systemctl restart webapp
+
 `;
 
 // const ami = pulumi.output(aws.ec2.getAmi)
