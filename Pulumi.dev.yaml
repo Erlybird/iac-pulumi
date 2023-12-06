@@ -13,7 +13,7 @@ igName: "igw"
 subnetMask: 24
 instance_type: "t2.micro"
 keyPair:  "Dev-Key"
-ami:  "ami-0ea6b6b695f2451f4"
+ami:  "ami-0da3ef15bcbbb4dc9"
 volumeSize: 20
 volumeType: "gp2"
 myIP: "67.173.248.41/32"
