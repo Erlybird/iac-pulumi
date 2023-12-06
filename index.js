@@ -170,6 +170,7 @@ const rdsInstance = new aws.rds.Instance("rds-instance", {
 });
 
 //Creating user data
+//rds instance, systemd, cloudwatch
 const userDataScript = pulumi.interpolate`#!/bin/bash
 echo "URL=jdbc:mysql://${rdsInstance.address}:3306/${rdsInstance.dbName}?createDatabaseIfNotExist=true" >> /etc/environment
 echo "USER=${rdsInstance.username}" >> /etc/environment
@@ -180,7 +181,43 @@ sudo systemctl enable webapp
 sudo systemctl start webapp
 sudo systemctl restart webapp
 
+sudo /opt/aws/amazon-cloudwatch-agent/bin/amazon-cloudwatch-agent-ctl \
+    -a fetch-config \
+    -m ec2 \
+    -c file:/opt/cloudwatch-config.json \
+    -s
+
 `;
+
+
+ // Create an IAM role
+ const role = new aws.iam.Role("role", {
+    assumeRolePolicy: JSON.stringify({
+        Version: "2012-10-17",
+        Statement: [
+            {
+                Action: "sts:AssumeRole",
+                Principal: {
+                    Service: "ec2.amazonaws.com"
+                },
+                Effect: "Allow",
+                Sid: ""
+            }
+        ]
+    })
+});
+
+    // Attach CloudWatchAgentServerPolicy policy to IAM role
+    new aws.iam.RolePolicyAttachment("rolePolicyAttachment", {
+        role: role.name,
+        policyArn: "arn:aws:iam::aws:policy/CloudWatchAgentServerPolicy"
+    });
+
+    
+    // // Create an IAM instance profile for the role
+    const instanceProfile = new aws.iam.InstanceProfile("myInstanceProfile", {
+        role: role.name,
+    });
 
 // const ami = pulumi.output(aws.ec2.getAmi)
 const instance = new aws.ec2.Instance("instance", {
@@ -190,7 +227,7 @@ const instance = new aws.ec2.Instance("instance", {
     associatePublicIpAddress: true,
     subnetId: publicSubnets[0].id,
     userDataReplaceOnChange:true,
-    
+    iamInstanceProfile:instanceProfile,
     userData: userDataScript.apply((data) => Buffer.from(data).toString("base64")),
     vpcSecurityGroupIds: [
         securityGroup.id
