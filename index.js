@@ -176,6 +176,10 @@ echo "URL=jdbc:mysql://${rdsInstance.address}:3306/${rdsInstance.dbName}?createD
 echo "USER=${rdsInstance.username}" >> /etc/environment
 echo "PASS=${rdsInstance.password}" >> /etc/environment 
 
+
+sudo cd
+sudo chown csye6225:csye6225 /opt/csye6225/csye6225.log
+
 sudo systemctl daemon-reload
 sudo systemctl enable webapp
 sudo systemctl start webapp
@@ -186,6 +190,7 @@ sudo /opt/aws/amazon-cloudwatch-agent/bin/amazon-cloudwatch-agent-ctl \
     -m ec2 \
     -c file:/opt/cloudwatch-config.json \
     -s
+
 
 `;
 
