@@ -60,43 +60,50 @@ const CreateSubnets = (vpc, type, noOfSubnets) => {
 const publicSubnets = CreateSubnets(my_VPC, 'public', configFile.numOfPubSubnets);
 const privateSubnets = CreateSubnets(my_VPC, 'private', configFile.numOfPriSubnets);
 
-//creating security groups
+
+
+
+    
+//creating security groups for EC2 instances - application 
 const securityGroup = new aws.ec2.SecurityGroup("security-group", {
     name: "My_ec2",
     vpcId: my_VPC.id,
+    description: " EC2 Security Group",
     ingress: [
+        // {
+        //     cidrBlocks: ["0.0.0.0/0"],
+        //     protocol: "tcp",
+        //     fromPort: 80,
+        //     toPort: 80
+        // },
+        // {
+        //     ipv6CidrBlocks: ["::/0"],
+        //     protocol: "tcp",
+        //     fromPort: 80,
+        //     toPort: 80
+        // },
+        // {
+        //     cidrBlocks: ["0.0.0.0/0"],
+        //     protocol: "tcp",
+        //     fromPort: 443,
+        //     toPort: 443
+        // },
+        // {
+        //     ipv6CidrBlocks: ["::/0"],
+        //     protocol: "tcp",
+        //     fromPort: 443,
+        //     toPort: 443
+        // },
         {
-            cidrBlocks: ["0.0.0.0/0"],
-            protocol: "tcp",
-            fromPort: 80,
-            toPort: 80
-        },
-        {
-            ipv6CidrBlocks: ["::/0"],
-            protocol: "tcp",
-            fromPort: 80,
-            toPort: 80
-        },
-        {
-            cidrBlocks: ["0.0.0.0/0"],
-            protocol: "tcp",
-            fromPort: 443,
-            toPort: 443
-        },
-        {
-            ipv6CidrBlocks: ["::/0"],
-            protocol: "tcp",
-            fromPort: 443,
-            toPort: 443
-        },
-        {
-            cidrBlocks: ["0.0.0.0/0"],
+            securityGroups: [lbSecGrp.id],
+            // cidrBlocks: ["0.0.0.0/0"],
             protocol: "tcp",
             fromPort: 22,
             toPort: 22
         },
         {
-            cidrBlocks: ["0.0.0.0/0"],
+            securityGroups: [lbSecGrp.id],
+            // cidrBlocks: ["0.0.0.0/0"],
             protocol: "tcp",
             fromPort: 8080,
             toPort: 8080
@@ -114,6 +121,28 @@ const securityGroup = new aws.ec2.SecurityGroup("security-group", {
         Name: "My_ec2"
     }
 });
+
+
+const lbSecGrp = new aws.ec2.SecurityGroup("sgLB", {
+    vpcId: vpc.id,
+    name: "lb-ec2",
+    description: "Load Balancer Security Group",
+    ingress: [
+        { protocol: "tcp", fromPort: 80, toPort: 80, 
+        cidrBlocks: ["0.0.0.0/0"]
+    },
+        { protocol: "tcp", fromPort: 443, toPort: 443, 
+        cidrBlocks: ["0.0.0.0/0"]
+     }
+    ],
+    egress: [
+        { protocol: "-1", fromPort: 0, toPort: 0, cidrBlocks: ["0.0.0.0/0"] }
+    ],
+    tags: {
+        Name: "load-balancer-sg",
+    },
+});
+
 
 //Creating SG for RDS, this takes the SG of the above EC2 to allow the traffic
 const dbSecGrp = new aws.ec2.SecurityGroup("sgRds", {
@@ -225,35 +254,35 @@ sudo /opt/aws/amazon-cloudwatch-agent/bin/amazon-cloudwatch-agent-ctl \
     });
 
 // const ami = pulumi.output(aws.ec2.getAmi)
-const instance = new aws.ec2.Instance("instance", {
-    ami: configFile.ami,
-    instanceType: configFile.instance_type,
-    disableApiTermination: false, // Protect against accidental termination.
-    associatePublicIpAddress: true,
-    subnetId: publicSubnets[0].id,
-    userDataReplaceOnChange:true,
-    iamInstanceProfile:instanceProfile,
-    userData: userDataScript.apply((data) => Buffer.from(data).toString("base64")),
-    vpcSecurityGroupIds: [
-        securityGroup.id
-    ],
-    keyName: configFile.keyPair,
+// const instance = new aws.ec2.Instance("instance", {
+//     ami: configFile.ami,
+//     instanceType: configFile.instance_type,
+//     disableApiTermination: false, // Protect against accidental termination.
+//     associatePublicIpAddress: true,
+//     subnetId: publicSubnets[0].id,
+//     userDataReplaceOnChange:true,
+//     iamInstanceProfile:instanceProfile,
+//     userData: userDataScript.apply((data) => Buffer.from(data).toString("base64")),
+//     vpcSecurityGroupIds: [
+//         securityGroup.id
+//     ],
+//     keyName: configFile.keyPair,
 
-    rootBlockDevice: {
+//     rootBlockDevice: {
 
-        volumeSize: configFile.volumeSize, // Root volume size in GB.
+//         volumeSize: configFile.volumeSize, // Root volume size in GB.
 
-        volumeType: configFile.volumeType, // Root volume type.
+//         volumeType: configFile.volumeType, // Root volume type.
 
-        deleteOnTermination: true, // Delete the root EBS volume on instance termination.
+//         deleteOnTermination: true, // Delete the root EBS volume on instance termination.
 
-    },
-    dependsOn:[rdsInstance],
-    tags: {
-        Name: `My_Instance`
-    }
+//     },
+//     dependsOn:[rdsInstance],
+//     tags: {
+//         Name: `My_Instance`
+//     }
 
-});
+// });
 
 
 // const my_subnet = new aws.ec2.Subnet("main_subnet",{
@@ -325,6 +354,8 @@ for (let k = 1; k <= configFile.numOfPriSubnets; k++) {
 
 
 }
+
+
 
 
 // const my_routeTableAssociation = new aws.ec2.RouteTableAssociation("main_routeTableAssociateion",{
