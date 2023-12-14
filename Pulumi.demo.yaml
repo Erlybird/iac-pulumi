@@ -12,7 +12,7 @@ igName: "igw"
 subnetMask: 24
 instance_type: "t2.micro"
 keyPair:  "FirstSSH"
-ami:  "ami-0ea6b6b695f2451f4"
+ami:  "ami-04e08847679006b25"
 volumeSize: 20
 volumeType: "gp2"
 myIP: "67.173.248.41/32"
@@ -25,4 +25,8 @@ dbName: "cloud"
 username: "root"
 password: "Ssangramm12"
 identifier: "my-rds-instance"
+hostedZoneId: "Z0362939CZODW3G548II"
+domainName: "demo.sangramvuppala.me"
+mailgunapikey: "68f02db6c6707956e255c46ecf39df76-07f37fca-11c50c76"
+
 
