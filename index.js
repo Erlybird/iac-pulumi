@@ -70,9 +70,9 @@ const lbSecGrp = new aws.ec2.SecurityGroup("sgLB", {
     name: "lb-ec2",
     description: "Load Balancer Security Group",
     ingress: [
-        { protocol: "tcp", fromPort: 80, toPort: 80, 
-        cidrBlocks: ["0.0.0.0/0"]
-    },
+        // { protocol: "tcp", fromPort: 80, toPort: 80, 
+        // cidrBlocks: ["0.0.0.0/0"]
+    // },
         { protocol: "tcp", fromPort: 443, toPort: 443, 
         cidrBlocks: ["0.0.0.0/0"]
      }
@@ -537,7 +537,7 @@ for (let k = 1; k <= configFile.numOfPriSubnets; k++) {
 // });
 
 const ec2LaunchTemplate = new aws.ec2.LaunchTemplate("LaunchTemplate_EC2", {
-
+    name: "LaunchTemplate_EC2",
     imageId: configFile.ami,
 
     instanceType: configFile.instance_type,
@@ -598,8 +598,11 @@ const targetGroup = new aws.lb.TargetGroup("target_group", {
 // Create an AWS Listener for the Load Balancer
 const listener = new aws.lb.Listener("front_end", {
     loadBalancerArn: lb.arn,
-    port: 80,//http port
-    protocol: "HTTP",
+    // port: 80,//http port
+    port: 443,
+    sslPolicy: "ELBSecurityPolicy-2016-08",
+    certificateArn: "arn:aws:acm:us-east-1:455958282906:certificate/d1c2bf8c-8094-4b4a-bfe3-b3d38faf1bb2",
+    protocol: "HTTPS",
     defaultActions: [{
         type: "forward",
         targetGroupArn: targetGroup.arn,
