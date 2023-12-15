@@ -70,8 +70,8 @@ const lbSecGrp = new aws.ec2.SecurityGroup("sgLB", {
     name: "lb-ec2",
     description: "Load Balancer Security Group",
     ingress: [
-        // { protocol: "tcp", fromPort: 80, toPort: 80, 
-        // cidrBlocks: ["0.0.0.0/0"]
+    //     { protocol: "tcp", fromPort: 80, toPort: 80, // these are to be commented
+    //     cidrBlocks: ["0.0.0.0/0"]
     // },
         { protocol: "tcp", fromPort: 443, toPort: 443, 
         cidrBlocks: ["0.0.0.0/0"]
@@ -602,6 +602,7 @@ const listener = new aws.lb.Listener("front_end", {
     port: 443,
     sslPolicy: "ELBSecurityPolicy-2016-08",
     certificateArn: "arn:aws:acm:us-east-1:455958282906:certificate/d1c2bf8c-8094-4b4a-bfe3-b3d38faf1bb2",
+    // protocol: "HTTP",
     protocol: "HTTPS",
     defaultActions: [{
         type: "forward",

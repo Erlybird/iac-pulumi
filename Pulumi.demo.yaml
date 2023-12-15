@@ -12,7 +12,8 @@ igName: "igw"
 subnetMask: 24
 instance_type: "t2.micro"
 keyPair:  "FirstSSH"
-ami:  "ami-04e08847679006b25"
+# ami:  "ami-04e08847679006b25"
+ami:  "ami-07b0ee90e79bd4890"
 volumeSize: 20
 volumeType: "gp2"
 myIP: "67.173.248.41/32"
