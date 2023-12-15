@@ -53,3 +53,7 @@
     and to refresh the resources
 
     ```pulumi refresh```
+
+
+## AWS Command for Importing a Certificate
+- aws acm import-certificate --profile demo --certificate fileb://demo_sangramvuppala_me.crt --certificate-chain fileb://demo_sangramvuppala_me.ca-bundle --private-key fileb://server.key --region us-east-1
